@@ -15,7 +15,7 @@ This is a banking application API, create account, delete account, list accounts
 # Commands
 
 ```
-make build	(build application to bin folder)
+make build (build application to bin folder)
 make run (build and run)
 make run-sqlite (build and run with sqlite database)
 make seed (buld and seed a user into the databse)
@@ -47,7 +47,6 @@ The docker-compose.yml file only intended to spin up a postgres DB, the go app i
 # Happy learning
 
 
-
-// TODO add validation
-// Secure application
-// TODO full test coverage
+TODO
+- Secure application
+- full test coverage
