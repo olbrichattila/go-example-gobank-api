@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 
 	"example.com/types"
 
@@ -28,6 +29,16 @@ type Storage interface {
 type DatabaseStore struct {
 	db       *sql.DB
 	isSqlite bool
+}
+
+var fields = []string{
+	"email",
+	"first_name",
+	"last_name",
+	"account_number",
+	"encrypted_password",
+	"balance",
+	"created_at",
 }
 
 func NewDatabaseStore(isSqlite bool) (*DatabaseStore, error) {
@@ -96,22 +107,8 @@ func (s *DatabaseStore) dropAccountTable() error {
 }
 
 func (s *DatabaseStore) CreateAccount(acc *types.Account) error {
-	query := `
-		INSERT INTO account 
-		(
-			email,
-			first_name,
-			last_name,
-			account_number,
-			encrypted_password,
-			balance,
-			created_at
-		) values 
-		(
-			$1,$2,$3,$4,$5,$6,$7
-		) RETURNING id
-	`
-
+	sql := "INSERT INTO account (%s) values ($1,$2,$3,$4,$5,$6,$7) RETURNING id"
+	query := fmt.Sprintf(sql, strings.Join(fields[:], ","))
 	id := 0
 	err := s.db.QueryRow(
 		query,
@@ -144,18 +141,7 @@ func (s *DatabaseStore) UpdateAccount(*types.Account) error {
 }
 
 func (s *DatabaseStore) GetAccountById(id int) (*types.Account, error) {
-	sql := `SELECT
-				id,
-				email,
-				first_name,
-				last_name,
-				account_number,
-				encrypted_password,
-				balance,
-				created_at
-			FROM
-				account
-			WHERE id = $1`
+	sql := fmt.Sprintf("SELECT id,%s FROM account WHERE id = $1", strings.Join(fields[:], ","))
 	rows, err := s.db.Query(sql, id)
 	if err != nil {
 		return nil, err
@@ -170,17 +156,7 @@ func (s *DatabaseStore) GetAccountById(id int) (*types.Account, error) {
 }
 
 func (s *DatabaseStore) GetAccountByNumber(accountNumber int64) (*types.Account, error) {
-	sql := `SELECT
-				id,
-				email,
-				first_name,
-				last_name, account_number,
-				encrypted_password,
-				balance,
-				created_at
-			FROM
-				account
-			WHERE account_number = $1`
+	sql := fmt.Sprintf("SELECT id,%s FROM account WHERE account_number = $1", strings.Join(fields[:], ","))
 	rows, err := s.db.Query(sql, accountNumber)
 	if err != nil {
 		return nil, err
@@ -195,17 +171,7 @@ func (s *DatabaseStore) GetAccountByNumber(accountNumber int64) (*types.Account,
 }
 
 func (s *DatabaseStore) GetAccountByEmail(email string) (*types.Account, error) {
-	sql := `SELECT
-				id,
-				email,
-				first_name,
-				last_name, account_number,
-				encrypted_password,
-				balance,
-				created_at
-			FROM
-				account
-			WHERE email = $1`
+	sql := fmt.Sprintf("SELECT id,%s FROM account WHERE email = $1", strings.Join(fields[:], ","))
 	rows, err := s.db.Query(sql, email)
 	if err != nil {
 		return nil, err
@@ -242,17 +208,7 @@ func (s *DatabaseStore) credit(accountNumber, amount int) error {
 
 func (s *DatabaseStore) GetAccounts() ([]*types.Account, error) {
 	accounts := []*types.Account{}
-	sql := `SELECT
-				id,
-				email,
-				first_name,
-				last_name,
-				account_number,
-				encrypted_password,
-				balance,
-				created_at
-			FROM
-				account`
+	sql := fmt.Sprintf("SELECT id,%s FROM account", strings.Join(fields[:], ","))
 	rows, err := s.db.Query(sql)
 	if err != nil {
 		return nil, err
