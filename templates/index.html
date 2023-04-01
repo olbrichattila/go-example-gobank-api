@@ -1,0 +1,273 @@
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <style>
+        div {
+            display: flex;
+            flex-direction: column;
+            margin: 6px;
+            padding: 6px;
+        }
+
+        .content {
+            border: 1px solid black;
+            border-radius: 6px;
+        }
+
+        .row {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            border-bottom: 1px solid black;
+        }
+
+        .row.selector {
+            cursor: pointer;
+        }
+
+        .row.selected {
+            background-color: #999999;
+            border-bottom: none;
+        }
+
+        .row.selector div:hover {
+            background-color: #d9d9d9;
+            border: 1px solid black;
+        }
+
+        .row div {
+            padding: 3px;
+            margin: 3px;
+        }
+
+        .row span {
+            padding: 3px 6px;
+            margin: 3px;
+            border: 1px solid black;
+            background-color: black;
+            color: white;
+            font-weight: bold;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .row span:hover {
+            background-color: #222222;
+        }
+
+        input {
+            margin: 6px;
+            padding: 6px;
+            border-radius: 3px;
+        }
+
+        .forms {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+
+        #accounts {
+            flex-grow: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <input id="logoutBtn" type="button" onclick="onLogout()" value="Logout">
+    <hr>
+    <div id="login" class="content">
+        <p>Login</p>
+        <input type="email" name="email" placeholder="Email" value="testemail@email.com" />
+        <input type="password" name="password" placeholder="Password" value="boom" />
+        <input type="button" onclick="onLogin()" value="Login">
+    </div>
+    <div id="loggedIn">
+        <div class="forms">
+            <div class="content">
+                <h2>Create new account</h2>
+                <input type="email" name="newEmail" value="" placeholder="Email" />
+                <input type="text" name="firstName" value="" placeholder="First name" />
+                <input type="text" name="lastName" value="" placeholder="Last Name" />
+                <input type="button" onclick="onCreateAccount()" value="Create new account">
+            </div>
+            <div class="content">
+                <h2>Transfer money</h2>
+                <input type="text" name="toAccount" value="" placeholder="Transfer to account" />
+                <input type="text" name="amount" value="" placeholder="Amount" />
+                <input type="button" onclick="onTransfer()" value="Transfer">
+            </div>
+        </div>
+        <div class="forms">
+            <div id="accounts" class="content"></div>
+            <div class="content">
+                <div class="row">
+                    <div>email:</div>
+                    <div id="email"></div>
+                </div>
+                <div class="row">
+                    <div>First Name:</div>
+                    <div id="firstName"></div>
+                </div>
+                <div class="row">
+                    <div>Last Name:</div>
+                    <div id="lastName"></div>
+                </div>
+                <div class="row">
+                    <div>Account Number:</div>
+                    <div id="accountNumber"></div>
+                </div>
+                <div class="row">
+                    <div>Balance:</div>
+                    <div id="balance"></div>
+                </div>
+                <div class="row">
+                    <div>Created at:</div>
+                    <div id="created_at"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var host = ""; //relative
+        var token = window.sessionStorage.getItem('token');
+
+        if (token) {
+            $('#login').hide();
+            $('#loggedIn').show();
+            $('#logoutBtn').show();
+            
+            $.ajaxSetup({
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'x-jwt-token': token,
+                }
+            });
+
+            render();
+        } else {
+            $('#login').show();
+            $('#loggedIn').hide();
+            $('#logoutBtn').hide();
+        }
+
+        function render() {
+            $.get(host + "/account")
+                .done(function (data) {
+                    var parent = $('#accounts');
+                    $(parent).empty();
+                    data.forEach(element => {
+
+                        e = $(
+                            '<div data-id="' + element.id + '" class="row selector"><div onclick="onViewAccount(' + element.id + ')">' + element.firstName + ' ' + element.lastName + '</div>' +
+                            '<span onclick="onDeleteAccount(' + element.id + ')">Delete</span></div>');
+                        parent.append(e);
+                    });
+                });
+        }
+
+        function onLogin() {
+            var payload = {
+                email: $('input[name="email"]').val(),
+                password: $('input[name="password"]').val(),
+            };
+
+            $.post(host + "/login", JSON.stringify(payload))
+                .done(function (data) {
+                    window.sessionStorage.setItem('token', data.token);
+                    window.location.reload()
+                })
+                .fail(function (res) {
+                    alert("Login failed: " + res.responseJSON.error)
+                });;
+        }
+
+        function onLogout() {
+            window.sessionStorage.removeItem('token');
+            window.location.reload()
+        }
+
+        function onCreateAccount() {
+            var payload = {
+                email: $('input[name="newEmail"]').val(),
+                firstName: $('input[name="firstName"]').val(),
+                lastName: $('input[name="lastName"]').val(),
+            };
+
+            $.post(host + "/account", JSON.stringify(payload))
+                .done(function (data) {
+                    render();
+                });
+        }
+
+        function onTransfer() {
+            var payload = {
+                toAccount: parseInt($('input[name="toAccount"]').val()),
+                amount: parseInt($('input[name="amount"]').val()),
+            };
+
+            $.post(host + "/transfer", JSON.stringify(payload))
+                .done(function (data) {
+                    render();
+                    alert('Transferred');
+                    window.location.reload()
+                })
+                .fail(function (res) {
+                    alert("Transfer failed: " + res.responseJSON.error)
+                });
+        }
+
+        function onViewAccount(id) {
+            markRowSelected(id);
+            $.get(host + "/account/" + id)
+                .done(function (data) {
+                    $("#email").html(data.email);
+                    $("#firstName").html(data.firstName);
+                    $("#lastName").html(data.lastName);
+                    $("#accountNumber").html(data.accountNumber);
+                    $("#balance").html(data.balance);
+                    $("#created_at").html(data.created_at);
+                })
+                .fail(function () {
+                    alert("Failed to view row, unathorized")
+                });
+        }
+
+        function onDeleteAccount(id) {
+            $.ajax({
+                url: host + "/account/" + id,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'x-jwt-token': token,
+                },
+                type: 'DELETE',
+                success: function () {
+                    render();
+                },
+                error: function (err) {
+                    console.log(err);
+                    var err = err.responseJSON.error ?? '';
+                    alert("Cannot delete (" + err + ")")
+                }
+            });
+        }
+
+        function markRowSelected(id) {
+            $('.selector').each(function () {
+                var element = $(this);
+                console.log(element.data('id'), id);
+                if (element.data('id') == id) {
+                    $(this).addClass('selected');
+                } else {
+                    $(this).removeClass('selected');
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
