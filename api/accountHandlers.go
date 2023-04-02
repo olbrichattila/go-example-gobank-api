@@ -14,7 +14,7 @@ func (s *APIServer) handleGetAccountById(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	account, err := s.store.GetAccountById(id)
+	account, err := s.Store.GetAccountById(id)
 	if err != nil {
 		return err
 	}
@@ -23,7 +23,7 @@ func (s *APIServer) handleGetAccountById(w http.ResponseWriter, r *http.Request,
 }
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request, u int) error {
-	accounts, err := s.store.GetAccounts()
+	accounts, err := s.Store.GetAccounts()
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	if err = s.store.CreateAccount(account); err != nil {
+	if err = s.Store.CreateAccount(account); err != nil {
 		return err
 	}
 
@@ -63,7 +63,7 @@ func (s *APIServer) handleDeleteAccountById(w http.ResponseWriter, r *http.Reque
 		return fmt.Errorf("Logged in account cannot be deleted")
 	}
 
-	err = s.store.DeleteAccount(id)
+	err = s.Store.DeleteAccount(id)
 	if err != nil {
 		return err
 	}

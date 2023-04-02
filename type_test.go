@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 
 	"example.com/types"
@@ -10,9 +9,7 @@ import (
 )
 
 func TestNewAccount(t *testing.T) {
-	res, err := types.NewAccount("email@email.com", "a", "b", "bumm")
+	_, err := types.NewAccount("email@email.com", "a", "b", "bumm")
 
 	assert.Nil(t, err)
-
-	fmt.Println(res.EncryptedPassword)
 }

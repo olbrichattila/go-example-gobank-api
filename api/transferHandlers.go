@@ -14,7 +14,7 @@ func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request, u int
 	}
 	defer r.Body.Close()
 
-	err := s.store.TransferRequest(transferRequest, u)
+	err := s.Store.TransferRequest(transferRequest, u)
 	if err != nil {
 		return err
 	}

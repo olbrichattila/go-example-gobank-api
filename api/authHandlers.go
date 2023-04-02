@@ -15,7 +15,7 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	account, err := s.store.GetAccountByEmail(req.Email)
+	account, err := s.Store.GetAccountByEmail(req.Email)
 	if err != nil {
 		return err
 	}

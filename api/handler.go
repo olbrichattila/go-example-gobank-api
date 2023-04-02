@@ -13,8 +13,9 @@ import (
 )
 
 type APIServer struct {
-	listenAddr string
-	store      storage.Storage
+	ListenAddr string
+	Store      storage.Storage
+	Router     *mux.Router
 }
 
 type apiFunc func(w http.ResponseWriter, r *http.Request) error
@@ -26,8 +27,8 @@ type ApiError struct {
 
 func NewApiServer(listenAddr string, store storage.Storage) *APIServer {
 	return &APIServer{
-		listenAddr: listenAddr,
-		store:      store,
+		ListenAddr: listenAddr,
+		Store:      store,
 	}
 }
 
@@ -42,18 +43,18 @@ func getID(r *http.Request) (int, error) {
 }
 
 func (s *APIServer) Run() {
-	router := mux.NewRouter()
-	router.HandleFunc("/", s.handleRenderIndex).Methods("GET")
-	router.HandleFunc("/login", makeHTTPHandleFunc(s.handleLogin)).Methods("POST")
-	router.HandleFunc("/account", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleGetAccount))).Methods("GET", "OPTIONS")
-	router.HandleFunc("/account", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleCreateAccount))).Methods("POST", "OPTIONS")
-	router.HandleFunc("/account/{id}", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleGetAccountById))).Methods("GET", "OPTIONS")
-	router.HandleFunc("/account/{id}", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleDeleteAccountById))).Methods("DELETE", "OPTIONS")
-	router.HandleFunc("/transfer", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleTransfer))).Methods("POST", "OPTIONS")
+	s.Router = mux.NewRouter()
+	s.Router.HandleFunc("/", s.handleRenderIndex).Methods("GET")
+	s.Router.HandleFunc("/login", makeHTTPHandleFunc(s.handleLogin)).Methods("POST")
+	s.Router.HandleFunc("/account", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleGetAccount))).Methods("GET", "OPTIONS")
+	s.Router.HandleFunc("/account", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleCreateAccount))).Methods("POST", "OPTIONS")
+	s.Router.HandleFunc("/account/{id}", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleGetAccountById))).Methods("GET", "OPTIONS")
+	s.Router.HandleFunc("/account/{id}", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleDeleteAccountById))).Methods("DELETE", "OPTIONS")
+	s.Router.HandleFunc("/transfer", withJWTAuth(makeHTTPMIddlewareHandleFunc(s.handleTransfer))).Methods("POST", "OPTIONS")
 
-	log.Println("gobank listens on port:", s.listenAddr)
+	log.Println("gobank listens on port:", s.ListenAddr)
 
-	http.ListenAndServe(s.listenAddr, router)
+	http.ListenAndServe(s.ListenAddr, s.Router)
 }
 
 func makeHTTPMIddlewareHandleFunc(f apiMiddlewareFunc) apiMiddlewareFunc {
